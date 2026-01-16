@@ -15,7 +15,7 @@ IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp'}
 # 支持的文档格式
 DOC_EXTENSIONS = {'.pdf'}
 
-def analyze_image(client, base64_image):
+def analyze_image(client, base64_image, prompt_text):
     """发送图片给大模型进行分析"""
     try:
         response = client.chat.completions.create(
@@ -24,7 +24,7 @@ def analyze_image(client, base64_image):
                 {
                     "role": "user",
                     "content": [
-                         {"type": "text", "text": "请扮演一位阅卷专家，详细分析这张图片的内容。\n1. ⚠️ 如果图片中包含表格，请务必将其还原为 Markdown 表格。\n2. 如果是试卷，请识别题目和学生答案，给出评分建议或知识点分析。\n3. 如果是其他内容，请总结核心要点。\n请使用 Markdown 格式输出一份详细的分析报告。"},
+                         {"type": "text", "text": prompt_text},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                     ]
                 }
@@ -78,13 +78,37 @@ def process_images():
     print(f"🚀 发现 {len(target_files)} 个文件，开始批处理...")
     print("-" * 40)
 
+    # 定义 Prompt
+    PROMPT_MD = "请扮演一位阅卷专家，详细分析这张图片的内容。\n1. ⚠️ 如果图片中包含表格，请务必将其还原为 Markdown 表格。\n2. 如果是试卷，请识别题目和学生答案，给出评分建议或知识点分析。\n3. 如果是其他内容，请总结核心要点。\n请使用 Markdown 格式输出一份详细的分析报告。"
+    
+    PROMPT_HTML = """请扮演一位阅卷专家，详细分析这张试卷图片的内容。
+    请识别题目和学生答案，并给出详细的评分建议和知识点分析。
+    ⚠️ 请直接输出一份完整的 HTML 代码作为分析报告。
+    要求：
+    1. 使用 UTF-8 编码。
+    2. 包含简单的 CSS 样式，使报告美观易读（例如使用表格展示分数，用不同颜色标记对错，标题清晰）。
+    3. 不要包含 ```html 标记或其他解释，只输出 <html>...</html> 代码。
+    """
+
     for i, rel_path in enumerate(target_files):
         # 完整的输入文件路径
         file_path = os.path.join(INPUT_DIR, rel_path)
         ext = os.path.splitext(file_path)[1].lower()
         
+        # 判断是否为试卷 (根据路径是否包含 "试卷")
+        is_exam = "试卷" in rel_path
+        
+        # 确定输出格式和 Prompt
+        if is_exam:
+            out_ext = ".html"
+            prompt = PROMPT_HTML
+            print(f"   📝 识别为试卷，将生成 HTML 报告...")
+        else:
+            out_ext = ".md"
+            prompt = PROMPT_MD
+        
         # 构建输出文件路径
-        output_rel_path = os.path.splitext(rel_path)[0] + ".md"
+        output_rel_path = os.path.splitext(rel_path)[0] + out_ext
         output_path = os.path.join(OUTPUT_DIR, output_rel_path)
         
         # 确保输出目录存在
@@ -101,22 +125,27 @@ def process_images():
                 
                 for page_num, page in enumerate(doc):
                     print(f"     -> 第 {page_num+1} 页...")
-                    # 渲染为图片 (dpi=150 足够清晰且不太大)
                     pix = page.get_pixmap(dpi=150)
                     img_data = pix.tobytes("jpg")
                     base64_image = base64.b64encode(img_data).decode('utf-8')
                     
                     # 分析
-                    page_result = analyze_image(client, base64_image)
+                    page_result = analyze_image(client, base64_image, prompt)
                     
-                    full_result += f"\n\n## 第 {page_num+1} 页分析\n\n{page_result}\n\n---\n"
+                    if is_exam:
+                        # 对于 HTML，如果是多页，可能需要合并 body。
+                        # 这里简化处理：如果是 HTML，只取 body 内容，或者让用户只看第一页。
+                        # 为了稳妥，多页 PDF 生成 HTML 比较复杂，暂且简单拼接，让浏览器容错。
+                        full_result += f"<h3>--- 第 {page_num+1} 页 ---</h3>\n{page_result}\n<hr>"
+                    else:
+                        full_result += f"\n\n## 第 {page_num+1} 页分析\n\n{page_result}\n\n---\n"
                     
                 doc.close()
                 
             else: # 处理图片
                 with open(file_path, "rb") as image_file:
                     base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-                full_result = analyze_image(client, base64_image)
+                full_result = analyze_image(client, base64_image, prompt)
 
             # 保存结果
             with open(output_path, "w", encoding="utf-8") as f:
