@@ -1,0 +1,6 @@
+PyQt6
+Pillow
+requests
+keyboard
+pyperclip
+openai
