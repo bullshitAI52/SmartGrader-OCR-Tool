@@ -4,3 +4,4 @@ requests
 keyboard
 pyperclip
 openai
+pymupdf
