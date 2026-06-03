@@ -4,6 +4,7 @@ import base64
 import time
 import json
 import fitz  # PyMuPDF
+import markdown
 from openai import OpenAI
 from PyQt6.QtCore import QSettings
 from PIL import Image, ImageDraw, ImageFont, ImageFile
@@ -83,50 +84,88 @@ def draw_marks(img_pil, items):
     
     return img_pil
 
-def generate_html_from_json(json_data, image_rel_path):
-    """根据 JSON 生成美观的 HTML 报告"""
-    summary = json_data.get("summary", "暂无总结")
-    items = json_data.get("items", [])
-    
-    html = f"""
+def get_styles():
+    return """
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f5f6fa; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #2c3e50; }
+        .score-box { font-size: 24px; color: #1976d2; font-weight: bold; margin-top: 10px; }
+        
+        /* Analysis Cards */
+        .summary-card { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin-bottom: 30px; border-radius: 4px; }
+        .image-box { text-align: center; margin: 30px 0; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; }
+        .image-box img { max-width: 100%; height: auto; border-radius: 4px; }
+        .question-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: all 0.2s; background: white; }
+        .question-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #ddd; }
+        
+        .status-correct { color: #2e7d32; background: #e8f5e9; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        .status-incorrect { color: #c62828; background: #ffebee; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        
+        .q-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #2c3e50; }
+        .q-analysis { color: #555; font-size: 15px; line-height: 1.6; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px; }
+        
+        /* Markdown/HTML Content Styles */
+        h1, h2, h3 { color: #34495e; margin-top: 1.5em; }
+        p { line-height: 1.8; color: #444; }
+        ul, ol { line-height: 1.8; color: #444; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px #e1e1e1; }
+        th, td { border: 1px solid #e1e1e1; padding: 12px 15px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #2c3e50; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        tr:hover { background-color: #f1f2f6; }
+        
+        /* Code */
+        code { background: #f1f2f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e74c3c; font-size: 0.9em; }
+        pre { background: #2d3436; color: #dfe6e9; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: transparent; color: inherit; padding: 0; }
+    """
+
+def wrap_html_content(body_content, title="分析报告"):
+    """使用统一的 CSS 包装 HTML 内容"""
+    return f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="zh-CN">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{title}</title>
         <style>
-            body {{ font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f5f7fa; margin: 0; padding: 20px; color: #333; }}
-            .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }}
-            .header {{ text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px; }}
-            .score-box {{ font-size: 24px; color: #1976d2; font-weight: bold; margin-top: 10px; }}
-            .summary-card {{ background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin-bottom: 30px; border-radius: 4px; }}
-            .image-box {{ text-align: center; margin: 30px 0; border: 1px solid #eee; padding: 10px; border-radius: 8px; }}
-            .image-box img {{ max-width: 100%; height: auto; border-radius: 4px; }}
-            .question-card {{ border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: all 0.2s; }}
-            .question-card:hover {{ box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #ddd; }}
-            .status-correct {{ color: #2e7d32; background: #e8f5e9; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; float: right; }}
-            .status-incorrect {{ color: #c62828; background: #ffebee; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; float: right; }}
-            .q-title {{ font-weight: bold; font-size: 16px; margin-bottom: 10px; }}
-            .q-analysis {{ color: #666; font-size: 14px; line-height: 1.6; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px; }}
+            {get_styles()}
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <h1>阅卷分析报告</h1>
-                <div class="score-box">AI 智能批改</div>
-            </div>
-            
-            <div class="summary-card">
-                <h3>总评摘要</h3>
-                <p>{summary}</p>
-            </div>
+            {body_content}
+        </div>
+    </body>
+    </html>
+    """
 
-            <div class="image-box">
-                <p><strong>批改预览</strong> (点击可查看大图)</p>
-                <img src="{image_rel_path}" alt="批改后的试卷">
-            </div>
+def generate_exam_html_body(json_data, image_rel_path):
+    """生成试卷批改的 HTML Body 内容"""
+    summary = json_data.get("summary", "暂无总结")
+    items = json_data.get("items", [])
+    
+    html = f"""
+        <div class="header">
+            <h1>阅卷分析报告</h1>
+            <div class="score-box">AI 智能批改</div>
+        </div>
+        
+        <div class="summary-card">
+            <h3>总评摘要</h3>
+            <p>{summary}</p>
+        </div>
 
-            <h3>逐题详细分析</h3>
+        <div class="image-box">
+            <p><strong>批改预览</strong> (点击可查看大图)</p>
+            <img src="{image_rel_path}" alt="批改后的试卷" onclick="window.open(this.src)" style="cursor: pointer;">
+        </div>
+
+        <h3>逐题详细分析</h3>
     """
     
     for idx, item in enumerate(items):
@@ -142,13 +181,37 @@ def generate_html_from_json(json_data, image_rel_path):
                 <div class="q-analysis">{analysis}</div>
             </div>
         """
-    
-    html += """
-        </div>
-    </body>
-    </html>
-    """
     return html
+
+def generate_exam_md_body(json_data):
+    """生成试卷批改的 Markdown 内容"""
+    summary = json_data.get("summary", "暂无总结")
+    items = json_data.get("items", [])
+    
+    md = f"""# 阅卷分析报告
+
+## 总评摘要
+{summary}
+
+## 逐题详细分析
+"""
+    
+    for idx, item in enumerate(items):
+        q_id = item.get("question_id", str(idx+1))
+        status = item.get("status", "unknown")
+        status_text = "✅ 正确" if status == "correct" else "❌ 需改进"
+        analysis = item.get("analysis", "无详细分析")
+        
+        md += f"""
+### 题目 {q_id} {status_text}
+{analysis}
+"""
+    return md
+
+def generate_html_from_json(json_data, image_rel_path):
+    """(兼容旧调用) 生成完整的 HTML 报告"""
+    body = generate_exam_html_body(json_data, image_rel_path)
+    return wrap_html_content(body, "阅卷分析报告")
 
 def process_images():
     settings = QSettings("MyOCRTool", "Settings")
@@ -181,7 +244,7 @@ def process_images():
     print(f"🚀 发现 {len(target_files)} 个文件，开始批处理...")
     print("-" * 40)
 
-    PROMPT_MD = "请扮演一位阅卷专家，详细分析这张图片的内容。\n1. ⚠️ 如果图片中包含表格，请务必将其还原为 Markdown 表格。\n2. 如果是试卷，请识别题目和学生答案，给出评分建议或知识点分析。\n3. 如果是其他内容，请总结核心要点。\n请使用 Markdown 格式输出一份详细的分析报告。"
+    PROMPT_MD = "请扮演一位阅卷专家，详细分析这张图片的内容。\n1. ⚠️ 如果图片中包含表格，请务必将其还原为 Markdown 表格，以便于后续处理。\n2. 如果是试卷，请识别题目和学生答案，给出评分建议或知识点分析。\n3. 如果是其他内容，请总结核心要点。\n请使用 Markdown 格式输出一份详细的分析报告。"
     
     # JSON Prompt 用于试卷
     PROMPT_EXAM_JSON = """请扮演一位阅卷专家，对这张试卷进行批改。
@@ -220,8 +283,8 @@ def process_images():
         try:
             if ext in DOC_EXTENSIONS: # PDF
                 doc = fitz.open(file_path)
-                full_html = ""
-                full_md = ""
+                full_html_body = ""
+                full_md_body = "" 
                 
                 output_base_dir = os.path.join(OUTPUT_DIR, os.path.dirname(rel_path))
                 os.makedirs(output_base_dir, exist_ok=True)
@@ -249,29 +312,38 @@ def process_images():
                             img_marked.save(marked_img_path)
                             
                             # 生成 HTML 片段
-                            page_html = generate_html_from_json(data, marked_img_name)
-                            # 为了合并，这里只取 container 内部，或者简单堆叠
-                            # 简化起见，直接堆叠 iframe 或者 div
-                            full_html += f"<h3>--- 第 {page_num+1} 页 ---</h3>" + page_html
+                            page_body = generate_exam_html_body(data, marked_img_name)
+                            full_html_body += f"<hr><h3>--- 第 {page_num+1} 页 ---</h3>" + page_body
                             
+                            # 生成 Markdown 片段
+                            page_md = generate_exam_md_body(data)
+                            full_md_body += f"\n---\n### 第 {page_num+1} 页\n" + page_md
+
                         except json.JSONDecodeError:
                             print("     ❌ JSON 解析失败，可能是模型输出格式不对")
-                            full_html += f"<p>本页解析失败: {json_str}</p>"
+                            full_html_body += f"<p>本页解析失败: {json_str}</p>"
+                            full_md_body += f"\n---\n### 第 {page_num+1} 页\n解析失败: {json_str}\n"
                     else:
-                        res = analyze_image(client, base64_image, PROMPT_MD)
-                        full_md += f"\n\n## 第 {page_num+1} 页\n{res}\n---\n"
+                        res_md_part = analyze_image(client, base64_image, PROMPT_MD)
+                        
+                        # 转换 Markdown 为 HTML
+                        res_html_part = markdown.markdown(res_md_part, extensions=['tables'])
+                        
+                        full_html_body += f"<hr><h3>--- 第 {page_num+1} 页 ---</h3>\n{res_html_part}\n"
+                        full_md_body += f"\n---\n### 第 {page_num+1} 页\n{res_md_part}\n"
                 
                 doc.close()
                 
-                # 保存最终结果
-                if is_exam:
-                    out_path = os.path.join(output_base_dir, f"{file_basename}.html")
-                    with open(out_path, "w", encoding="utf-8") as f:
-                        f.write(full_html)
-                else:
-                    out_path = os.path.join(output_base_dir, f"{file_basename}.md")
-                    with open(out_path, "w", encoding="utf-8") as f:
-                        f.write(full_md)
+                # 保存最终结果 (HTML)
+                final_html = wrap_html_content(full_html_body, f"分析报告: {file_basename}")
+                out_path_html = os.path.join(output_base_dir, f"{file_basename}.html")
+                with open(out_path_html, "w", encoding="utf-8") as f:
+                     f.write(final_html)
+                
+                # 保存最终结果 (Markdown)
+                out_path_md = os.path.join(output_base_dir, f"{file_basename}.md")
+                with open(out_path_md, "w", encoding="utf-8") as f:
+                     f.write(full_md_body)
                         
             else: # 图片
                 with open(file_path, "rb") as f:
@@ -300,17 +372,32 @@ def process_images():
                         
                         # 生成 HTML
                         html_content = generate_html_from_json(data, marked_img_name)
-                        out_path = os.path.join(output_base_dir, f"{file_basename}.html")
-                        with open(out_path, "w", encoding="utf-8") as f:
+                        out_path_html = os.path.join(output_base_dir, f"{file_basename}.html")
+                        with open(out_path_html, "w", encoding="utf-8") as f:
                             f.write(html_content)
+                        
+                        # 生成 Markdown
+                        md_content = generate_exam_md_body(data)
+                        out_path_md = os.path.join(output_base_dir, f"{file_basename}.md")
+                        with open(out_path_md, "w", encoding="utf-8") as f:
+                            f.write(md_content)
                             
                     except json.JSONDecodeError:
                         print("    ❌ JSON 解析失败")
                 else:
-                    res = analyze_image(client, base64_image, PROMPT_MD)
-                    out_path = os.path.join(output_base_dir, f"{file_basename}.md")
-                    with open(out_path, "w", encoding="utf-8") as f:
-                        f.write(res)
+                    res_md = analyze_image(client, base64_image, PROMPT_MD)
+                    
+                    # 转换 Markdown 为 HTML
+                    res_html = markdown.markdown(res_md, extensions=['tables'])
+                    final_html = wrap_html_content(res_html, f"分析报告: {file_basename}")
+                    
+                    out_path_html = os.path.join(output_base_dir, f"{file_basename}.html")
+                    with open(out_path_html, "w", encoding="utf-8") as f:
+                        f.write(final_html)
+                        
+                    out_path_md = os.path.join(output_base_dir, f"{file_basename}.md")
+                    with open(out_path_md, "w", encoding="utf-8") as f:
+                        f.write(res_md)
             
             print(f"✅ 处理完成")
 

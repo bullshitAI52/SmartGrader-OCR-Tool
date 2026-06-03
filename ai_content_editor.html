@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI生成内容编辑器-markdown在线编辑器</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <link rel="stylesheet" href="fonts/font-awesome.css">
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon-wrapper">
+                    <div class="logo-text-icon">AI</div>
+                    <div class="logo-icon-decoration"></div>
+                </div>
+                <span class="logo-text">AI内容编辑器-智能格式处理工具</span>
+            </div>
+            <nav class="main-nav">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="#">首页</a></li>
+                    <li><a href="#" id="tutorialBtn">使用教程</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-section">
+                <div class="editor-header">
+                    <h3>AI生成的内容</h3>
+                    <button id="pasteBtn">粘贴内容</button>
+                </div>
+                <div class="editor" id="markdownEditor" contenteditable="true"></div>
+            </div>
+            <div class="editor-section">
+                <div class="editor-header">
+                    <h3>自动编辑预览区</h3>
+                    <button id="copyBtn">复制内容</button>
+                </div>
+                <div class="editor" id="previewEditor" contenteditable="true"></div>
+            </div>
+        </div>
+        <div class="button-container">
+            <div class="export-buttons">
+                <button id="exportWordBtn">导出Word</button>
+                <button id="exportPdfBtn">导出PDF</button>
+                <button id="exportExcelBtn">导出Excel</button>
+                <button id="exportImageBtn">导出图片</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 本地第三方库 - 替换为 CDN 加载 -->
+    <!-- 1. 核心库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+    <!-- 2. Excel处理库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <!-- 3. 图片导出库 -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <!-- 4. 数学公式渲染库 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- 5. 图片处理模块 (暂时移除或保留 placeholder) -->
+    <!-- <script src="js/ct.js"></script> -->
+
+    <!-- 6. 应用脚本 -->
+    <script src="js/script.js"></script>
+    <!-- <script src="js/pdf-export.js"></script> -->
+
+    <!-- 初始通知元素 -->
+    <div id="initialNotification" class="notification error" style="visibility:hidden; opacity:0;">
+        没有找到表格内容
+    </div>
+
+    <!-- 教程弹窗 -->
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>&#128218; AI内容编辑器使用教程</h2>
+                <span class="close" id="closeTutorial">×</span>
+            </div>
+            <div class="modal-body">
+                <div class="tutorial-content">
+                    <div class="tutorial-section">
+                        <h3>&#127919; 这是什么工具？</h3>
+                        <p>这是一个专门处理AI生成内容的工具。AI生成的内容经常格式混乱，这个工具可以自动整理成标准格式，并导出为各种文件。</p>
+                    </div>
+
+                    <div class="tutorial-section">
+                        <h3>&#128640; 怎么使用？</h3>
+                        <div class="step">
+                            <h4>第1步：复制AI内容</h4>
+                            <p>从AI助手（如文心一言、腾讯元宝、ChatGPT、Claude、通义千问、Kimi、豆包、月之暗面、智谱清言、百川大模型、讯飞星火、商汤商量、MiniMax等）复制内容，<strong>一定要选择"复制为Markdown"</strong>。
+                            </p>
+                        </div>
+                        <div class="step">
+                            <h4>第2步：粘贴到编辑器</h4>
+                            <p>点击"粘贴内容"按钮，或直接按Ctrl+V粘贴。</p>
+                        </div>
+                        <div class="step">
+                            <h4>第3步：查看整理效果</h4>
+                            <p>右侧会自动显示整理后的内容，包括表格、列表、标题等。</p>
+                        </div>
+                        <div class="step">
+                            <h4>第4步：导出文件</h4>
+                            <p>根据需要选择导出格式：
+                                <br>&#8226; <strong>Word：</strong>适合编辑和分享
+                                <br>&#8226; <strong>PDF：</strong>适合打印
+                                <br>&#8226; <strong>Excel：</strong>适合表格数据
+                                <br>&#8226; <strong>图片：</strong>适合分享和展示
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-section">
+                        <h3>&#10024; 新功能亮点</h3>
+                        <div class="update-box">
+                            <ul>
+                                <li><strong>图片导出：</strong>可以将内容导出为高清图片，方便分享</li>
+                                <li><strong>数学公式：</strong>完美支持数学公式显示，包括复杂公式</li>
+                                <li><strong>表格优化：</strong>自动修复表格格式问题</li>
+                                <li><strong>格式清理：</strong>自动清理多余的符号和格式</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-section">
+                        <h3>&#9888;&#65039; 重要提醒</h3>
+                        <div class="warning-box">
+                            <ul>
+                                <li><strong>复制格式：</strong>必须使用"复制为Markdown"，否则格式会乱</li>
+                                <li><strong>只读模式：</strong>这里不能直接编辑，需要修改请导出后操作</li>
+                                <li><strong>隐私安全：</strong>所有处理都在本地，不会上传任何数据</li>
+                                <li><strong>PDF导出：</strong>点击导出→打印→另存为PDF→取消页眉页脚→保存</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-section">
+                        <h3>&#10067; 常见问题</h3>
+                        <div class="faq">
+                            <div class="faq-item">
+                                <h4>Q: 为什么表格显示不对？</h4>
+                                <p>A: 请确保复制时选择了"复制为Markdown"格式。</p>
+                            </div>
+                            <div class="faq-item">
+                                <h4>Q: 数学公式不显示？</h4>
+                                <p>A: 请确保公式语法正确，如 $x^2$ 或 $$\frac{a}{b}$$</p>
+                            </div>
+                            <div class="faq-item">
+                                <h4>Q: 导出的图片模糊？</h4>
+                                <p>A: 图片导出会自动优化清晰度，如果还是模糊请检查原始内容。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeTutorialBtn" class="btn-primary">我知道了</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

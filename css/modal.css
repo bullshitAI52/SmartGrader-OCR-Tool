@@ -1,0 +1,154 @@
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideIn 0.3s ease-out;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e1e1e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px 25px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.tutorial-section {
+    margin-bottom: 25px;
+}
+
+.tutorial-section h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-left: 4px solid #3498db;
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.step {
+    background: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #ddd;
+}
+
+.step h4 {
+    margin: 0 0 5px 0;
+    color: #34495e;
+}
+
+.step p {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.update-box {
+    background: #e8f4fd;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #b6dfff;
+}
+
+.warning-box {
+    background: #fff3cd;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #ffeeba;
+}
+
+.faq-item {
+    margin-bottom: 15px;
+}
+
+.faq-item h4 {
+    margin: 0 0 5px 0;
+    color: #e67e22;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e1e1e1;
+    text-align: right;
+    background: #f9f9f9;
+    border-radius: 0 0 12px 12px;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

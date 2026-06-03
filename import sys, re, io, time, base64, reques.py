@@ -1,8 +1,6 @@
 import sys, re, io, time, base64, requests, threading, keyboard
-from openai import OpenAI
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, 
-                             QWidget, QTextEdit, QLabel, QLineEdit, QStackedWidget, QHBoxLayout, QComboBox)
-
+                             QWidget, QTextEdit, QLabel, QLineEdit, QStackedWidget, QHBoxLayout)
 from PyQt6.QtCore import Qt, QRect, pyqtSignal, QObject, QTimer, QSettings
 from PyQt6.QtGui import QPainter, QPen, QColor
 from PIL import ImageGrab, ImageEnhance, ImageFilter
@@ -119,24 +117,17 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(page)
  
         layout.addWidget(QLabel("<b>API_URL:</b>"))
-        self.edit_url = QLineEdit(self.settings.value("url", "https://aistudio.baidu.com/llm/lmapi/v3"))
+        self.edit_url = QLineEdit(self.settings.value("url", "在此输入API_URL"))
         layout.addWidget(self.edit_url)
  
         layout.addWidget(QLabel("<b>API_TOKEN:</b>"))
-        self.edit_token = QLineEdit(self.settings.value("token", "6cb2698ad8bee94fb7ccd948fade9548e78f83ab"))
+        self.edit_token = QLineEdit(self.settings.value("token", "在此输入TOKEN"))
         layout.addWidget(self.edit_token)
  
         # layout.addWidget(QLabel("<b>快捷键 (如 alt+q, ctrl+shift+a):</b>"))
         # self.edit_hotkey = QLineEdit(self.settings.value("hotkey", "alt+q"))
         # layout.addWidget(self.edit_hotkey)
  
-        layout.addWidget(QLabel("<b>识别模式:</b>"))
-        self.combo_mode = QComboBox()
-        self.combo_mode.addItems(["纯文本提取", "表格还原 (HTML)", "智能分析报告"])
-        # Load saved index, default to 0
-        self.combo_mode.setCurrentIndex(int(self.settings.value("mode", 0)))
-        layout.addWidget(self.combo_mode)
-
         layout.addStretch()
  
         btn_save = QPushButton("保存并返回")
@@ -170,7 +161,6 @@ class MainWindow(QMainWindow):
         #保存到配置
         self.settings.setValue("url", self.edit_url.text())
         self.settings.setValue("token", self.edit_token.text())
-        self.settings.setValue("mode", self.combo_mode.currentIndex())
          
         #new_hotkey = self.edit_hotkey.text().lower()
         #if new_hotkey != self.current_hotkey:
@@ -202,88 +192,45 @@ class MainWindow(QMainWindow):
  
     def request_ocr_thread(self, img_obj):
         self.show()
-        self.label_status.setText("正在思考中...")
+        self.label_status.setText("图片解析中")
         self.btn_capture.setEnabled(False)
         threading.Thread(target=self.ocr_worker, args=(img_obj,), daemon=True).start()
          
     def ocr_worker(self, img):
         try:
-            # 图像预处理
+            #图像预处理
+            img = img.convert('L')
+            img = ImageEnhance.Contrast(img).enhance(2.0)
+            img = img.filter(ImageFilter.SHARPEN)
             img = img.convert('RGB')
-            # 图像压缩
+            #图像压缩
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format='JPEG', quality=95)
-            # base64 编码
-            base64_image = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
-
+            file_data = base64.b64encode(img_byte_arr.getvalue()).decode("ascii")
+ 
             # 从界面获取实时配置
-            base_url = self.settings.value("url")
-            api_key = self.settings.value("token")
-            mode_index = int(self.settings.value("mode", 0))
-
-            # 默认模型
-            model = "ernie-5.0-thinking-preview"
-
-            # 构建 Prompt
-            prompts = [
-                "请识别这张图片中的所有文字，直接输出文字内容，不要包含其他解释、markdown 格式或 '识别结果' 等字样。保持原有的换行格式。", # 0: Text
-                "请识别图片中的表格结构，并将其还原为 HTML 表格代码 (<table>...)。请直接输出 HTML 代码，不要包含 ```html 标记或其他解释。", # 1: Table
-                "请扮演一位阅卷专家，分析这张图片的内容。如果是试卷，请识别题目和学生答案，并给出评分建议或知识点分析；如果是其他内容，请总结核心要点。⚠️ 尽量使用 HTML 格式输出（如 <table>, <ul>, <b> 等），以便于阅读和数据提取。" # 2: Analysis
-            ]
-            
-            prompt_text = prompts[mode_index] if mode_index < len(prompts) else prompts[0]
-
-            client = OpenAI(
-                api_key=api_key,
-                base_url=base_url
-            )
-
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt_text},
-                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                        ]
-                    }
-                ],
-                stream=False
-            )
-            
-            content = response.choices[0].message.content
-            # 尝试提取思考过程（如果有）
-            # 注意：OpenAI 标准库通常把 extra details 放在 message.content 里或者其他字段，
-            # 这里 Ernie 的思考过程可能需要特殊处理，但通常 content 是最终回答。
-            # 用户代码示例里的 stream 处理逻辑略有不同，但这里我们用非 stream 简化。
-            
-            if content:
-                self.signals.finished.emit(content.strip(), "识别完成")
+            url = self.settings.value("url")
+            token = self.settings.value("token")
+ 
+            headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
+            payload = {"file": file_data, "fileType": 1, "useDocOrientationClassify": False, "useChartRecognition": False}
+             
+            response = requests.post(url, json=payload, headers=headers, timeout=20)
+             
+            if response.status_code == 200:
+                result = response.json()["result"]
+                text = "".join([re.sub(r'<[^>]+>', '', res["markdown"]["text"]) + "\n" for res in result.get("layoutParsingResults", [])])
+                self.signals.finished.emit(text.strip() or "解析失败，请尝试重新识别", "识别完成")
             else:
-                self.signals.finished.emit("", "未识别到文字")
-
+                self.signals.finished.emit("", f"API错误: {response.status_code}")
         except Exception as e:
-            error_msg = str(e)
-            if "401" in error_msg:
-                error_msg = "认证失败：请检查 Token"
-            elif "404" in error_msg:
-                error_msg = "请求错误：检查 URL 或模型名称"
-            self.signals.finished.emit("", f"出错: {error_msg}")
+            self.signals.finished.emit("", f"异常: {str(e)}")
  
     def on_ocr_finished(self, text, status):
         self.btn_capture.setEnabled(True)
         self.label_status.setText(status)
         if text:
-            # 简单判断是否为 HTML 或 Markdown 表格
-            if "<table>" in text or "<tr>" in text:
-                self.result_box.setHtml(text)
-            else:
-                try:
-                    self.result_box.setMarkdown(text)
-                except AttributeError:
-                    self.result_box.setText(text) # Fallback for older PyQt
-            
+            self.result_box.setText(text)
             pyperclip.copy(text)
  
 if __name__ == "__main__":

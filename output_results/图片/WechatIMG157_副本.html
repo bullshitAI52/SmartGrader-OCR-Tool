@@ -1,0 +1,106 @@
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>分析报告: WechatIMG157_副本</title>
+        <style>
+            
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f5f6fa; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #2c3e50; }
+        .score-box { font-size: 24px; color: #1976d2; font-weight: bold; margin-top: 10px; }
+        
+        /* Analysis Cards */
+        .summary-card { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin-bottom: 30px; border-radius: 4px; }
+        .image-box { text-align: center; margin: 30px 0; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; }
+        .image-box img { max-width: 100%; height: auto; border-radius: 4px; }
+        .question-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: all 0.2s; background: white; }
+        .question-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #ddd; }
+        
+        .status-correct { color: #2e7d32; background: #e8f5e9; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        .status-incorrect { color: #c62828; background: #ffebee; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        
+        .q-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #2c3e50; }
+        .q-analysis { color: #555; font-size: 15px; line-height: 1.6; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px; }
+        
+        /* Markdown/HTML Content Styles */
+        h1, h2, h3 { color: #34495e; margin-top: 1.5em; }
+        p { line-height: 1.8; color: #444; }
+        ul, ol { line-height: 1.8; color: #444; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px #e1e1e1; }
+        th, td { border: 1px solid #e1e1e1; padding: 12px 15px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #2c3e50; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        tr:hover { background-color: #f1f2f6; }
+        
+        /* Code */
+        code { background: #f1f2f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e74c3c; font-size: 0.9em; }
+        pre { background: #2d3436; color: #dfe6e9; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: transparent; color: inherit; padding: 0; }
+    
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>黑板内容分析报告（计量单位进率总结）</h1>
+<h2>一、内容识别</h2>
+<p>图片展示的是<strong>小学数学计量单位进率</strong>的教学板书，核心是梳理长度、面积、质量、时间四类常用计量单位的单位序列及相邻单位间的换算进率。</p>
+<h2>二、知识点拆解与表格还原</h2>
+<p>以下将板书中四类单位的“单位序列”和“相邻进率”整理为结构化表格：</p>
+<table>
+<thead>
+<tr>
+<th>单位类别</th>
+<th>单位序列（从小到大）</th>
+<th>相邻单位间的进率</th>
+<th>关键备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>长度单位</td>
+<td>毫米 → 厘米 → 分米 → 米 → 千米</td>
+<td>10、10、10、1000</td>
+<td>毫米-厘米-分米-米为<strong>十进制</strong>（进率10）；米-千米为<strong>千进制</strong>（进率1000）</td>
+</tr>
+<tr>
+<td>面积单位</td>
+<td>平方厘米 → 平方分米 → 平方米 → 公顷 → 平方千米</td>
+<td>100、100、10000、100</td>
+<td>面积单位是长度单位的“平方”，因此进率为长度进率的平方（如10²=100）；<br>1公顷=10000平方米（特殊换算）；<br>公顷-平方千米进率为100</td>
+</tr>
+<tr>
+<td>质量单位</td>
+<td>克 → 千克 → 吨</td>
+<td>1000、1000</td>
+<td>质量单位为<strong>千进制</strong>（进率1000）</td>
+</tr>
+<tr>
+<td>时间单位</td>
+<td>秒 → 分 → 时 → 天</td>
+<td>60、60、24</td>
+<td>秒-分、分-时为<strong>六十进制</strong>（进率60）；<br>时-天为<strong>二十四进制</strong>（进率24）</td>
+</tr>
+</tbody>
+</table>
+<h2>三、教学价值与知识点分析</h2>
+<ol>
+<li><strong>知识定位</strong>：属于小学数学“量与计量”板块的核心基础内容，是单位换算、解决实际问题（如长度测量、面积计算、质量感知、时间规划）的前提。  </li>
+<li><strong>记忆逻辑</strong>：板书通过“括号标注进率基数”（如长度单位括号“10”、面积“100”、质量“1000”、时间“60”），帮助学生关联“单位类型”与“进率规律”：  </li>
+<li>长度/面积/质量的进率与“十进制/百进制/千进制”的数位逻辑呼应；  </li>
+<li>时间单位的“60、24”是生活中钟表、日历的直观规律（如1分钟=60秒，1天=24小时）。  </li>
+<li><strong>易错点提示</strong>：  </li>
+<li>面积单位中“平方米→公顷”的进率易混淆（需强化“1公顷=10000平方米”的认知）；  </li>
+<li>时间单位“时→天”的进率（24）与长度/质量的“10/1000”规律不同，需单独记忆。  </li>
+</ol>
+<h2>四、总结</h2>
+<p>该板书是典型的<strong>单元复习/新授总结型板书</strong>，通过“分类+序列+进率”的结构化呈现，帮助学生建立计量单位的系统认知。教学中可结合“单位换算题”“生活场景题”（如“课桌长度约5分米”“教室面积约50平方米”）强化进率应用，同时关注易错单位（如公顷、平方千米）的辨析。</p>
+        </div>
+    </body>
+    </html>
+    

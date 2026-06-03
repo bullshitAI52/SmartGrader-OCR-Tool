@@ -1,0 +1,95 @@
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>阅卷分析报告</title>
+        <style>
+            
+        body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f5f6fa; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #2c3e50; }
+        .score-box { font-size: 24px; color: #1976d2; font-weight: bold; margin-top: 10px; }
+        
+        /* Analysis Cards */
+        .summary-card { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin-bottom: 30px; border-radius: 4px; }
+        .image-box { text-align: center; margin: 30px 0; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; }
+        .image-box img { max-width: 100%; height: auto; border-radius: 4px; }
+        .question-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: all 0.2s; background: white; }
+        .question-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #ddd; }
+        
+        .status-correct { color: #2e7d32; background: #e8f5e9; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        .status-incorrect { color: #c62828; background: #ffebee; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; float: right; }
+        
+        .q-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #2c3e50; }
+        .q-analysis { color: #555; font-size: 15px; line-height: 1.6; margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px; }
+        
+        /* Markdown/HTML Content Styles */
+        h1, h2, h3 { color: #34495e; margin-top: 1.5em; }
+        p { line-height: 1.8; color: #444; }
+        ul, ol { line-height: 1.8; color: #444; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px #e1e1e1; }
+        th, td { border: 1px solid #e1e1e1; padding: 12px 15px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #2c3e50; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        tr:hover { background-color: #f1f2f6; }
+        
+        /* Code */
+        code { background: #f1f2f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e74c3c; font-size: 0.9em; }
+        pre { background: #2d3436; color: #dfe6e9; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: transparent; color: inherit; padding: 0; }
+    
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            
+        <div class="header">
+            <h1>阅卷分析报告</h1>
+            <div class="score-box">AI 智能批改</div>
+        </div>
+        
+        <div class="summary-card">
+            <h3>总评摘要</h3>
+            <p>板书内容为小学数学常见单位（长度、面积、质量、时间）的进率梳理，知识点准确，涵盖了毫米到千米、平方厘米到平方千米、克到吨、秒到天的单位换算进率，板书清晰，知识点呈现正确。</p>
+        </div>
+
+        <div class="image-box">
+            <p><strong>批改预览</strong> (点击可查看大图)</p>
+            <img src="WechatIMG157_副本_marked.jpg" alt="批改后的试卷" onclick="window.open(this.src)" style="cursor: pointer;">
+        </div>
+
+        <h3>逐题详细分析</h3>
+    
+            <div class="question-card">
+                <span class="status-correct">✅ 正确</span>
+                <div class="q-title">题目 1</div>
+                <div class="q-analysis">考察长度单位换算进率，板书正确呈现毫米、厘米、分米、米、千米间的进率（10、10、10、1000），知识点准确。</div>
+            </div>
+        
+            <div class="question-card">
+                <span class="status-correct">✅ 正确</span>
+                <div class="q-title">题目 2</div>
+                <div class="q-analysis">考察面积单位换算进率，板书正确呈现平方厘米、平方分米、平方米、公顷、平方千米间的进率（100、100、10000、100），知识点准确。</div>
+            </div>
+        
+            <div class="question-card">
+                <span class="status-correct">✅ 正确</span>
+                <div class="q-title">题目 3</div>
+                <div class="q-analysis">考察质量单位换算进率，板书正确呈现克、千克、吨间的进率（1000、1000），知识点准确。</div>
+            </div>
+        
+            <div class="question-card">
+                <span class="status-correct">✅ 正确</span>
+                <div class="q-title">题目 4</div>
+                <div class="q-analysis">考察时间单位换算进率，板书正确呈现秒、分、时、天间的进率（60、60、24），知识点准确。</div>
+            </div>
+        
+        </div>
+    </body>
+    </html>
+    
